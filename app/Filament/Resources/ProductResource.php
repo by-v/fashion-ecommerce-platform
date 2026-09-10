@@ -10,8 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -27,8 +26,7 @@ class ProductResource extends Resource
                     ->required()
                     ->live(onBlur: true)
                     ->afterStateUpdated(
-                        fn(string $operation, $state, Forms\Set $set) =>
-                        $operation === 'create' ? $set('slug', \Illuminate\Support\Str::slug($state) . '-' . uniqid()) : null
+                        fn (string $operation, $state, Forms\Set $set) => $operation === 'create' ? $set('slug', Str::slug($state).'-'.uniqid()) : null
                     ),
                 Forms\Components\TextInput::make('slug')
                     ->required()
@@ -58,6 +56,9 @@ class ProductResource extends Resource
                     ->imageResizeTargetHeight('800'),
                 Forms\Components\Toggle::make('is_featured')
                     ->label('Produk Unggulan'),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Aktif')
+                    ->default(true),
             ]);
     }
 

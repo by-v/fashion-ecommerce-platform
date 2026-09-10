@@ -11,7 +11,7 @@ Kami telah menerima pesanan Anda **#{{ $order->order_number }}** dan menunggu pe
 Cek Cara Membayar
 @endcomponent
 
-Selesaikan pembayaran sebelum **{{ $order->payment_deadline->format('d M Y, H:i') }} WIB**.
+Selesaikan pembayaran sebelum **{{ $order->payment_deadline->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB**.
 
 ---
 
@@ -29,3 +29,4 @@ Selesaikan pembayaran sebelum **{{ $order->payment_deadline->format('d M Y, H:i'
 Terima kasih,<br>
 {{ config('app.name') }}
 @endcomponent
+    

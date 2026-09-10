@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
 use App\Events\OrderPaid;
-use Midtrans\Config;
-use Midtrans\Snap;
+use App\Models\Order;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Midtrans\Config;
+use Midtrans\Notification;
+use Midtrans\Snap;
 
 class PaymentController extends Controller
 {
@@ -37,7 +39,7 @@ class PaymentController extends Controller
                 'id' => $item->product_id,
                 'price' => (int) $item->price,
                 'quantity' => $item->quantity,
-                'name' => substr($item->product_name . ($item->size ? " ({$item->size})" : ''), 0, 50),
+                'name' => substr($item->product_name.($item->size ? " ({$item->size})" : ''), 0, 50),
             ];
         })->toArray();
 
@@ -75,7 +77,7 @@ class PaymentController extends Controller
     // Dipanggil Midtrans otomatis (webhook) saat status pembayaran berubah
     public function notification()
     {
-        $notif = new \Midtrans\Notification();
+        $notif = new Notification;
 
         $orderNumber = $notif->order_id;
         $statusCode = $notif->status_code;
@@ -86,9 +88,9 @@ class PaymentController extends Controller
 
         // 1. Validasi Signature Key
         $serverKey = config('services.midtrans.server_key');
-        $expectedSignature = hash('sha512', $orderNumber . $statusCode . $grossAmount . $serverKey);
+        $expectedSignature = hash('sha512', $orderNumber.$statusCode.$grossAmount.$serverKey);
 
-        if (!hash_equals($expectedSignature, $signatureKey)) {
+        if (! hash_equals($expectedSignature, $signatureKey)) {
             Log::warning('Midtrans webhook invalid signature key', [
                 'order_id' => $orderNumber,
                 'signature_key' => $signatureKey,
@@ -99,7 +101,7 @@ class PaymentController extends Controller
 
         $order = Order::where('order_number', $orderNumber)->first();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
@@ -116,8 +118,10 @@ class PaymentController extends Controller
                     return response()->json(['message' => 'Gross amount mismatch'], 400);
                 }
 
-                // Hindari pemrosesan ganda jika status sudah paid
-                if ($order->status === 'paid') {
+                // Hindari pemrosesan ganda jika status sudah paid atau payment record sudah ada
+                $existingPayment = Payment::where('payment_gateway_id', $notif->transaction_id)->exists();
+
+                if ($order->status === 'paid' || $existingPayment) {
                     return response()->json(['message' => 'OK']);
                 }
 

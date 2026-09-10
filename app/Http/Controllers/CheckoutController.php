@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderCreated;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
-use App\Events\OrderCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
@@ -19,18 +21,18 @@ class CheckoutController extends Controller
     {
         $cart = Auth::user()->cart;
 
-        if (!$cart || $cart->items->isEmpty()) {
+        if (! $cart || $cart->items->isEmpty()) {
             return redirect()->route('cart')->with('error', 'Keranjang Anda kosong.');
         }
 
         $items = $cart->items->load('product', 'variant');
-        $subtotal = $items->sum(fn($i) => $i->product->price * $i->quantity);
+        $subtotal = $items->sum(fn ($i) => $i->product->price * $i->quantity);
 
         session(['checkout_type' => 'cart']);
 
         $shippingMethods = ShippingMethod::where('is_active', true)->get();
 
-        session(['checkout_submission_token' => \Illuminate\Support\Str::uuid()->toString()]);
+        session(['checkout_submission_token' => Str::uuid()->toString()]);
 
         return view('checkout', compact('items', 'subtotal', 'shippingMethods'));
     }
@@ -113,7 +115,7 @@ class CheckoutController extends Controller
                     ]);
                 } else {
                     $cart = Auth::user()->cart;
-                    if (!$cart) {
+                    if (! $cart) {
                         throw new \Exception('Keranjang tidak ditemukan.');
                     }
                     $itemsToOrder = $cart->items->load('product', 'variant');
@@ -122,7 +124,7 @@ class CheckoutController extends Controller
                         if ($item->variant_id ?? $item->product_variant_id) {
                             $variantId = $item->product_variant_id;
                             $item->unsetRelation('variant');
-                            $item->variant = \App\Models\ProductVariant::lockForUpdate()->find($variantId);
+                            $item->variant = ProductVariant::lockForUpdate()->find($variantId);
                         } else {
                             $productId = $item->product_id;
                             $item->unsetRelation('product');
@@ -135,19 +137,40 @@ class CheckoutController extends Controller
                     throw new \Exception('Tidak ada produk untuk di-checkout.');
                 }
 
+                // Validasi produk masih aktif / tersedia
+                foreach ($itemsToOrder as $item) {
+                    if (! $item->product) {
+                        throw ValidationException::withMessages([
+                            'product' => ['Salah satu produk di pesanan Anda sudah dihapus.'],
+                        ]);
+                    }
+
+                    if (! $item->product->is_active) {
+                        throw ValidationException::withMessages([
+                            'product' => ["Produk {$item->product->name} sudah tidak tersedia."],
+                        ]);
+                    }
+
+                    if ($item->product_variant_id && ! $item->variant) {
+                        throw ValidationException::withMessages([
+                            'product' => ["Varian size untuk {$item->product->name} sudah tidak tersedia."],
+                        ]);
+                    }
+                }
+
                 // Validasi stok dengan lock
                 foreach ($itemsToOrder as $item) {
                     $availableStock = $item->variant ? $item->variant->stock : $item->product->stock;
 
                     if ($availableStock < $item->quantity) {
-                        $productLabel = $item->product->name . ($item->variant ? " (Size {$item->variant->size})" : '');
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'stock' => ["Stok {$productLabel} tidak mencukupi. Sisa stok: {$availableStock}."]
+                        $productLabel = $item->product->name.($item->variant ? " (Size {$item->variant->size})" : '');
+                        throw ValidationException::withMessages([
+                            'stock' => ["Stok {$productLabel} tidak mencukupi. Sisa stok: {$availableStock}."],
                         ]);
                     }
                 }
 
-                $subtotal = $itemsToOrder->sum(fn($i) => $i->product->price * $i->quantity);
+                $subtotal = $itemsToOrder->sum(fn ($i) => $i->product->price * $i->quantity);
                 $total = $subtotal + $shippingMethod->cost;
 
                 $order = Order::create([
@@ -193,7 +216,7 @@ class CheckoutController extends Controller
 
                 return $order;
             });
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $lock->release();
 
             return back()->withErrors($e->errors());

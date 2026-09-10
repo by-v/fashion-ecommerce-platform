@@ -23,7 +23,7 @@
             </div>
 
             <div class="bg-yellow-50 text-yellow-800 text-sm px-4 py-3">
-                Selesaikan pembayaran sebelum {{ $order->payment_deadline->format('d M Y, H:i') }}
+                Selesaikan pembayaran sebelum {{ $order->payment_deadline->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB
             </div>
         </div>
 
