@@ -99,87 +99,110 @@ class CheckoutController extends Controller
         $checkoutType = session('checkout_type');
         $shippingMethod = ShippingMethod::findOrFail($request->shipping_method_id);
 
-        // Siapkan daftar item yang akan dimasukkan ke order
-        if ($checkoutType === 'buy_now') {
-            $data = session('buy_now_data');
-            $product = Product::findOrFail($data['product_id']);
-            $variant = $data['product_variant_id']
-                ? $product->variants()->find($data['product_variant_id'])
-                : null;
+        try {
+            $order = DB::transaction(function () use ($request, $shippingMethod, $checkoutType) {
+                // Siapkan daftar item dan lakukan pessimistic locking
+                if ($checkoutType === 'buy_now') {
+                    $data = session('buy_now_data');
+                    $product = Product::lockForUpdate()->findOrFail($data['product_id']);
+                    $variant = $data['product_variant_id']
+                        ? $product->variants()->lockForUpdate()->find($data['product_variant_id'])
+                        : null;
 
-            $itemsToOrder = collect([
-                (object) [
-                    'product' => $product,
-                    'variant' => $variant,
-                    'quantity' => $data['quantity'],
-                ],
-            ]);
-        } else {
-            $cart = Auth::user()->cart;
-            $itemsToOrder = $cart->items->load('product', 'variant');
-        }
+                    $itemsToOrder = collect([
+                        (object) [
+                            'product' => $product,
+                            'variant' => $variant,
+                            'quantity' => $data['quantity'],
+                        ],
+                    ]);
+                } else {
+                    $cart = Auth::user()->cart;
+                    if (!$cart) {
+                        throw new \Exception('Keranjang tidak ditemukan.');
+                    }
+                    $itemsToOrder = $cart->items->load('product', 'variant');
 
-        if ($itemsToOrder->isEmpty()) {
-            return redirect()->route('shop')->with('error', 'Tidak ada produk untuk di-checkout.');
-        }
+                    foreach ($itemsToOrder as $item) {
+                        if ($item->variant_id ?? $item->product_variant_id) {
+                            $variantId = $item->product_variant_id;
+                            $item->unsetRelation('variant');
+                            $item->variant = \App\Models\ProductVariant::lockForUpdate()->find($variantId);
+                        } else {
+                            $productId = $item->product_id;
+                            $item->unsetRelation('product');
+                            $item->product = Product::lockForUpdate()->find($productId);
+                        }
+                    }
+                }
 
-        $subtotal = $itemsToOrder->sum(fn($i) => $i->product->price * $i->quantity);
-        $total = $subtotal + $shippingMethod->cost;
+                if ($itemsToOrder->isEmpty()) {
+                    throw new \Exception('Tidak ada produk untuk di-checkout.');
+                }
 
-        foreach ($itemsToOrder as $item) {
-            $availableStock = $item->variant ? $item->variant->stock : $item->product->stock;
+                // Validasi stok dengan lock
+                foreach ($itemsToOrder as $item) {
+                    $availableStock = $item->variant ? $item->variant->stock : $item->product->stock;
 
-            if ($availableStock < $item->quantity) {
-                $productLabel = $item->product->name . ($item->variant ? " (Size {$item->variant->size})" : '');
-                return back()->withErrors(['stock' => "Stok {$productLabel} tidak mencukupi. Sisa stok: {$availableStock}."]);
-            }
-        }
+                    if ($availableStock < $item->quantity) {
+                        $productLabel = $item->product->name . ($item->variant ? " (Size {$item->variant->size})" : '');
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'stock' => ["Stok {$productLabel} tidak mencukupi. Sisa stok: {$availableStock}."]
+                        ]);
+                    }
+                }
 
-        $order = DB::transaction(function () use ($request, $shippingMethod, $itemsToOrder, $subtotal, $total, $checkoutType) {
+                $subtotal = $itemsToOrder->sum(fn($i) => $i->product->price * $i->quantity);
+                $total = $subtotal + $shippingMethod->cost;
 
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'order_number' => strtoupper(Str::random(10)),
-                'status' => 'pending',
-                'recipient_name' => $request->recipient_name,
-                'phone' => $request->phone,
-                'country' => $request->country,
-                'city' => $request->city,
-                'address_detail' => $request->address_detail,
-                'shipping_method_id' => $shippingMethod->id,
-                'shipping_cost' => $shippingMethod->cost,
-                'subtotal' => $subtotal,
-                'total' => $total,
-                'payment_deadline' => now()->addMinutes(10),
-            ]);
-
-            foreach ($itemsToOrder as $item) {
-                $order->items()->create([
-                    'product_id' => $item->product->id,
-                    'product_variant_id' => $item->variant?->id,
-                    'product_name' => $item->product->name,
-                    'size' => $item->variant?->size,
-                    'price' => $item->product->price,
-                    'quantity' => $item->quantity,
-                    'subtotal' => $item->product->price * $item->quantity,
+                $order = Order::create([
+                    'user_id' => Auth::id(),
+                    'order_number' => strtoupper(Str::random(10)),
+                    'status' => 'pending',
+                    'recipient_name' => $request->recipient_name,
+                    'phone' => $request->phone,
+                    'country' => $request->country,
+                    'city' => $request->city,
+                    'address_detail' => $request->address_detail,
+                    'shipping_method_id' => $shippingMethod->id,
+                    'shipping_cost' => $shippingMethod->cost,
+                    'subtotal' => $subtotal,
+                    'total' => $total,
+                    'payment_deadline' => now()->addMinutes(10),
                 ]);
 
-                // Kurangi stok — per variant kalau ada size, atau stok produk utama kalau tidak
-                if ($item->variant) {
-                    $item->variant->decrement('stock', $item->quantity);
-                    $item->variant->syncProductStock();
-                } else {
-                    $item->product->decrement('stock', $item->quantity);
+                foreach ($itemsToOrder as $item) {
+                    $order->items()->create([
+                        'product_id' => $item->product->id,
+                        'product_variant_id' => $item->variant?->id,
+                        'product_name' => $item->product->name,
+                        'size' => $item->variant?->size,
+                        'price' => $item->product->price,
+                        'quantity' => $item->quantity,
+                        'subtotal' => $item->product->price * $item->quantity,
+                    ]);
+
+                    // Kurangi stok
+                    if ($item->variant) {
+                        $item->variant->decrement('stock', $item->quantity);
+                        $item->variant->syncProductStock();
+                    } else {
+                        $item->product->decrement('stock', $item->quantity);
+                    }
                 }
-            }
 
-            // Kalau checkout dari cart, kosongkan cart setelah order dibuat
-            if ($checkoutType === 'cart') {
-                Auth::user()->cart->items()->delete();
-            }
+                // Kalau checkout dari cart, kosongkan cart setelah order dibuat
+                if ($checkoutType === 'cart') {
+                    Auth::user()->cart->items()->delete();
+                }
 
-            return $order;
-        });
+                return $order;
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         event(new OrderCreated($order));
 
