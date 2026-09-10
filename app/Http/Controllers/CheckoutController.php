@@ -8,6 +8,7 @@ use App\Models\ShippingMethod;
 use App\Events\OrderCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -75,16 +76,10 @@ class CheckoutController extends Controller
     // Proses submit form alamat + buat order
     public function store(Request $request)
     {
-        // Cegah submit ganda: kalau ada order pending yang baru dibuat dalam 10 detik terakhir
-        // dengan session checkout yang sama, tolak submit kedua
-        $recentDuplicate = Order::where('user_id', auth()->id())
-            ->where('status', 'pending')
-            ->where('created_at', '>=', now()->subSeconds(10))
-            ->latest()
-            ->first();
+        $lock = Cache::lock('user_checkout_'.auth()->id(), 10);
 
-        if ($recentDuplicate) {
-            return redirect()->route('order.confirmation', $recentDuplicate->order_number);
+        if (! $lock->get()) {
+            return back()->with('error', 'Pesanan sedang diproses, mohon tunggu sebentar.');
         }
 
         $request->validate([
@@ -199,14 +194,20 @@ class CheckoutController extends Controller
                 return $order;
             });
         } catch (\Illuminate\Validation\ValidationException $e) {
+            $lock->release();
+
             return back()->withErrors($e->errors());
         } catch (\Exception $e) {
+            $lock->release();
+
             return back()->with('error', $e->getMessage());
         }
 
         event(new OrderCreated($order));
 
         session()->forget(['checkout_type', 'buy_now_data']);
+
+        $lock->release();
 
         return redirect()->route('order.confirmation', $order->order_number);
     }
