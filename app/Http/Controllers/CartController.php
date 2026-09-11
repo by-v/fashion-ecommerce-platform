@@ -19,6 +19,10 @@ class CartController extends Controller
     public function index()
     {
         $cart = $this->getOrCreateCart();
+
+        // Bersihkan otomatis item jika record produknya sudah dihapus dari database
+        $cart->items()->whereDoesntHave('product')->delete();
+
         $cart->load('items.product', 'items.variant');
 
         return view('cart', compact('cart'));
@@ -32,13 +36,37 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
+        $product = Product::findOrFail($request->product_id);
+
+        if (! $product->is_active) {
+            return back()->with('error', "Produk {$product->name} saat ini tidak tersedia.");
+        }
+
+        $variant = $request->product_variant_id
+            ? ProductVariant::where('product_id', $product->id)->find($request->product_variant_id)
+            : null;
+
+        if ($request->product_variant_id && ! $variant) {
+            return back()->with('error', 'Varian ukuran yang dipilih tidak ditemukan.');
+        }
+
+        $availableStock = $variant ? $variant->stock : $product->stock;
+        $label = $product->name.($variant ? " (Size {$variant->size})" : '');
+
         $cart = $this->getOrCreateCart();
 
-        // Cek apakah item (produk + size sama) sudah ada di cart, kalau ada tambah qty-nya
+        // Cek apakah item (produk + size sama) sudah ada di cart
         $existingItem = $cart->items()
             ->where('product_id', $request->product_id)
             ->where('product_variant_id', $request->product_variant_id)
             ->first();
+
+        $currentQtyInCart = $existingItem ? $existingItem->quantity : 0;
+        $requestedTotal = $currentQtyInCart + $request->quantity;
+
+        if ($requestedTotal > $availableStock) {
+            return back()->with('error', "Stok {$label} tidak mencukupi. Sisa stok tersedia: {$availableStock}.");
+        }
 
         if ($existingItem) {
             $existingItem->increment('quantity', $request->quantity);
@@ -58,10 +86,26 @@ class CartController extends Controller
         $request->validate(['quantity' => 'required|integer|min:1']);
 
         $cart = $this->getOrCreateCart();
-        $item = $cart->items()->findOrFail($itemId);
+        $item = $cart->items()->with('product', 'variant')->findOrFail($itemId);
+
+        if (! $item->product || ! $item->product->is_active) {
+            return back()->with('error', 'Produk ini sudah tidak tersedia.');
+        }
+
+        if ($item->product_variant_id && ! $item->variant) {
+            return back()->with('error', 'Varian ukuran untuk produk ini sudah tidak tersedia.');
+        }
+
+        $availableStock = $item->variant ? $item->variant->stock : $item->product->stock;
+        $label = $item->product->name.($item->variant ? " (Size {$item->variant->size})" : '');
+
+        if ($request->quantity > $availableStock) {
+            return back()->with('error', "Stok {$label} tidak mencukupi. Sisa stok tersedia: {$availableStock}.");
+        }
+
         $item->update(['quantity' => $request->quantity]);
 
-        return back();
+        return back()->with('success', 'Jumlah produk berhasil diperbarui.');
     }
 
     public function remove($itemId)
