@@ -10,11 +10,11 @@ class OrderObserver
 {
     public function updating(Order $order): void
     {
-        // Kirim email saat status berubah jadi "shipped"
-        if ($order->isDirty('status') && $order->status === 'shipped') {
+        // Kirim email saat status pertama kali berubah jadi "shipped"
+        if ($order->isDirty('status') && $order->getOriginal('status') !== 'shipped' && $order->status === 'shipped') {
 
             // Set shipped_at kalau belum diisi
-            if (!$order->shipped_at) {
+            if (! $order->shipped_at) {
                 $order->shipped_at = now();
             }
 
