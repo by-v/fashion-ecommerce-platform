@@ -8,6 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('orders:cancel-expired')->everyFiveMinutes();
-Schedule::command('orders:complete-delivered')->hourly();
-Schedule::command('orders:cancel-expired')->everyFiveMinutes();
+Schedule::command('orders:cancel-expired')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('orders:complete-delivered')->hourly()->withoutOverlapping();
