@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class ProductVariant extends Model
 {
@@ -26,9 +27,14 @@ class ProductVariant extends Model
 
     public function syncProductStock(): void
     {
-        if ($this->product) {
-            $totalStock = $this->product->variants()->sum('stock');
-            $this->product->update(['stock' => $totalStock]);
+        if (! $this->product) {
+            return;
         }
+
+        DB::transaction(function () {
+            $product = Product::lockForUpdate()->findOrFail($this->product_id);
+            $totalStock = $product->variants()->sum('stock');
+            $product->update(['stock' => $totalStock]);
+        });
     }
 }

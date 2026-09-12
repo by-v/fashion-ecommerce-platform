@@ -108,6 +108,16 @@ class CheckoutController extends Controller
                 if ($checkoutType === 'buy_now') {
                     $data = session('buy_now_data');
                     $product = Product::lockForUpdate()->findOrFail($data['product_id']);
+
+                    $hasVariants = $product->variants()->exists();
+                    $hasVariantSelection = ! empty($data['product_variant_id']);
+
+                    if ($hasVariants && ! $hasVariantSelection) {
+                        throw ValidationException::withMessages([
+                            'product' => ['Silakan pilih ukuran produk ini.'],
+                        ]);
+                    }
+
                     $variant = $data['product_variant_id']
                         ? $product->variants()->lockForUpdate()->find($data['product_variant_id'])
                         : null;
@@ -127,14 +137,14 @@ class CheckoutController extends Controller
                     $itemsToOrder = $cart->items->load('product', 'variant');
 
                     foreach ($itemsToOrder as $item) {
+                        $productId = $item->product_id;
+                        $item->unsetRelation('product');
+                        $item->product = Product::lockForUpdate()->find($productId);
+
                         if ($item->variant_id ?? $item->product_variant_id) {
                             $variantId = $item->product_variant_id;
                             $item->unsetRelation('variant');
                             $item->variant = ProductVariant::lockForUpdate()->find($variantId);
-                        } else {
-                            $productId = $item->product_id;
-                            $item->unsetRelation('product');
-                            $item->product = Product::lockForUpdate()->find($productId);
                         }
                     }
                 }

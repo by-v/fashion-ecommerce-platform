@@ -26,8 +26,8 @@ class ProductSeeder extends Seeder
             $product = Product::create([
                 'category_id' => $categories->random()->id,
                 'name' => $item['name'],
-                'slug' => Str::slug($item['name']) . '-' . uniqid(),
-                'description' => 'Deskripsi produk ' . $item['name'] . '. Bahan berkualitas, nyaman dipakai sehari-hari.',
+                'slug' => Str::slug($item['name']).'-'.uniqid(),
+                'description' => 'Deskripsi produk '.$item['name'].'. Bahan berkualitas, nyaman dipakai sehari-hari.',
                 'price' => $item['price'],
                 'stock' => rand(5, 50),
                 'image' => null,
@@ -41,6 +41,8 @@ class ProductSeeder extends Seeder
                     'stock' => rand(2, 15),
                 ]);
             }
+
+            $product->update(['stock' => $product->variants->sum('stock')]);
         }
     }
 }

@@ -42,6 +42,13 @@ class CartController extends Controller
             return back()->with('error', "Produk {$product->name} saat ini tidak tersedia.");
         }
 
+        $hasVariants = $product->variants()->exists();
+        $hasVariantSelection = $request->filled('product_variant_id');
+
+        if ($hasVariants && ! $hasVariantSelection) {
+            return back()->with('error', 'Silakan pilih ukuran produk ini.');
+        }
+
         $variant = $request->product_variant_id
             ? ProductVariant::where('product_id', $product->id)->find($request->product_variant_id)
             : null;
