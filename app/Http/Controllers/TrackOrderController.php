@@ -15,7 +15,7 @@ class TrackOrderController extends Controller
     public function track(Request $request)
     {
         $request->validate([
-            'order_number' => 'required|string',
+            'order_number' => ['required', 'string', 'alpha_num', 'max:10'],
         ]);
 
         $order = Order::with('items', 'shippingMethod')

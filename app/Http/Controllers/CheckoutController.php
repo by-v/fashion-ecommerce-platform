@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -86,12 +87,17 @@ class CheckoutController extends Controller
 
         $request->validate([
             'recipient_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s]{9,20}$/'],
             'country' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'address_detail' => 'required|string',
+            'address_detail' => 'required|string|max:2000',
             'shipping_method_id' => 'required|exists:shipping_methods,id',
+            'submission_token' => ['required', 'string', 'uuid'],
         ]);
+
+        if ($request->session()->get('checkout_submission_token') !== $request->submission_token) {
+            return back()->with('error', 'Validasi pesanan gagal. Silakan coba lagi.');
+        }
 
         $checkoutType = session('checkout_type');
         $shippingMethod = ShippingMethod::findOrFail($request->shipping_method_id);
@@ -223,7 +229,15 @@ class CheckoutController extends Controller
         } catch (\Exception $e) {
             $lock->release();
 
-            return back()->with('error', $e->getMessage());
+            Log::error('Checkout failed', [
+                'user_id' => auth()->id(),
+                'checkout_type' => $checkoutType,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return back()->with('error', 'Terjadi kesalahan saat memproses pesanan. Silakan coba lagi.');
         }
 
         event(new OrderCreated($order));

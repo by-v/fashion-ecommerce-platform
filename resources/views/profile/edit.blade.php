@@ -102,7 +102,7 @@
                                                 @if($order->status === 'pending') bg-amber-100 text-amber-700
                                                 @elseif($order->status === 'paid') bg-green-100 text-green-700
                                                 @elseif($order->status === 'shipped') bg-blue-100 text-blue-700
-                                                @elseif($order->status === 'delivered') bg-gray-100 text-gray-700
+                                                @elseif($order->status === 'completed') bg-gray-100 text-gray-700
                                                 @else bg-red-100 text-red-700 @endif">
                                                 {{ $order->status }}
                                             </div>
@@ -117,7 +117,7 @@
                                                     @endif
                                                     <div class="flex-1 min-w-0">
                                                         <p class="text-sm font-bold truncate">{{ $item->product->name }}</p>
-                                                        <p class="text-xs text-gray-500">x{{ $item->quantity }} • {{ $item->variant_name ?? 'Default' }}</p>
+                                                        <p class="text-xs text-gray-500">x{{ $item->quantity }} • {{ $item->size ?? 'Default' }}</p>
                                                     </div>
                                                     <div class="text-sm font-bold">
                                                         Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}

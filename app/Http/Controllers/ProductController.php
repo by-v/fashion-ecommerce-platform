@@ -10,6 +10,7 @@ class ProductController extends Controller
     {
         $product = Product::with('variants', 'category')
             ->where('slug', $slug)
+            ->where('is_active', true)
             ->firstOrFail();
 
         return view('product-detail', compact('product'));
