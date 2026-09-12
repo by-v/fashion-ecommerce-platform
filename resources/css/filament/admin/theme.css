@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap');
+
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@config 'tailwind.config.js';
+
+@layer components {
+    /* Dashboard widget cards */
+    .fi-wo-stats-overview .fi-wo-stat,
+    .fi-wo-chart .fi-cha,
+    .fi-wo-table .fi-tbl {
+        @apply rounded-xl border border-stone-200 shadow-sm dark:border-stone-700 dark:bg-stone-800/50;
+    }
+
+    /* Stat cards container */
+    .fi-wo-stats-overview .fi-wo-stat {
+        @apply bg-white dark:bg-stone-800/50;
+    }
+
+    /* Stat card value - larger font */
+    .fi-wo-stat-value {
+        @apply text-2xl font-bold text-stone-900 dark:text-stone-100;
+    }
+
+    /* Stat card label */
+    .fi-wo-stat-label {
+        @apply text-sm font-medium text-stone-500 dark:text-stone-400;
+    }
+
+    /* Stat card description */
+    .fi-wo-stat-description {
+        @apply text-xs text-stone-400 dark:text-stone-500;
+    }
+
+    /* Stat card icon colors */
+    .fi-wo-stat[data-stat="revenue"] .fi-wo-stat-icon {
+        @apply text-emerald-500 dark:text-emerald-400;
+    }
+
+    .fi-wo-stat[data-stat="total-orders"] .fi-wo-stat-icon {
+        @apply text-blue-500 dark:text-blue-400;
+    }
+
+    .fi-wo-stat[data-stat="orders-pending"] .fi-wo-stat-icon {
+        @apply text-amber-500 dark:text-amber-400;
+    }
+
+    .fi-wo-stat[data-stat="low-stock"] .fi-wo-stat-icon {
+        @apply text-rose-500 dark:text-rose-400;
+    }
+
+    /* Widget heading */
+    .fi-widget-heading {
+        @apply font-montserrat text-base font-semibold text-stone-700 dark:text-stone-300;
+    }
+
+    /* Dashboard main heading */
+    .fi-header-heading {
+        @apply font-montserrat text-2xl font-bold text-stone-900 dark:text-stone-100;
+    }
+}
+
+@layer utilities {
+    .font-montserrat {
+        font-family: 'Montserrat', sans-serif;
+    }
+}
