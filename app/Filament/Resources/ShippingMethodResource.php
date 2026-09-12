@@ -3,15 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ShippingMethodResource\Pages;
-use App\Filament\Resources\ShippingMethodResource\RelationManagers;
 use App\Models\ShippingMethod;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ShippingMethodResource extends Resource
 {
@@ -30,10 +27,12 @@ class ShippingMethodResource extends Resource
                     ->label('Ongkos Kirim')
                     ->numeric()
                     ->prefix('Rp')
-                    ->required(),
+                    ->required()
+                    ->minValue(0),
                 Forms\Components\TextInput::make('estimated_days')
                     ->label('Estimasi Hari')
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(1),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Aktif')
                     ->default(true),

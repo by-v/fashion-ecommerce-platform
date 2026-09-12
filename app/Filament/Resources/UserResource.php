@@ -3,13 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
@@ -38,7 +39,10 @@ class UserResource extends Resource
                         'customer' => 'Customer',
                     ])
                     ->required()
-                    ->default('admin'),
+                    ->default('customer')
+                    ->visible(fn (?User $record, string $operation): bool => $operation === 'create' || ($record && $record->id !== Filament::auth()->id()))
+                    ->disabled(fn (User $record): bool => $record->id === Filament::auth()->id())
+                    ->dehydrated(fn (?User $record, string $operation): bool => $operation === 'create' || ($record && $record->id !== Filament::auth()->id())),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn ($state) => Hash::make($state))
@@ -83,12 +87,23 @@ class UserResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (User $record): bool => $record->id !== Filament::auth()->id()),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (User $record): bool => $record->id !== Filament::auth()->id())
+                    ->disabled(fn (User $record): bool => $record->role === 'admin' && User::whereRole('admin')->count() <= 1),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->deselectRecordsAfterCompletion()
+                        ->before(function (Builder $query): void {
+                            $count = $query->whereRole('admin')->count();
+                            $total = $query->count();
+                            if ($count === $total && $total >= User::whereRole('admin')->count()) {
+                                throw new \Exception('Tidak dapat menghapus semua admin. Setidaknya satu admin harus tersisa.');
+                            }
+                        }),
                 ]),
             ]);
     }

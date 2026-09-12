@@ -39,11 +39,15 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('price')
                     ->numeric()
                     ->prefix('Rp')
-                    ->required(),
+                    ->required()
+                    ->minValue(0),
                 Forms\Components\TextInput::make('stock')
                     ->numeric()
                     ->default(0)
-                    ->required(),
+                    ->required()
+                    ->minValue(0)
+                    ->visible(fn (?Product $record): bool => ! $record || $record->variants()->count() === 0)
+                    ->disabled(fn (?Product $record): bool => $record && $record->variants()->count() > 0),
                 Forms\Components\FileUpload::make('image')
                     ->image()
                     ->directory('products')

@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
+use App\Models\ProductVariant;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Validation\Rules\Unique;
 
 class VariantsRelationManager extends RelationManager
 {
@@ -49,11 +49,17 @@ class VariantsRelationManager extends RelationManager
                         ],
                     ])
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->unique(
+                        table: ProductVariant::class,
+                        column: 'size',
+                        modifyRuleUsing: fn (Unique $rule) => $rule->where('product_id', $this->getOwnerRecord()->id)
+                    ),
                 Forms\Components\TextInput::make('stock')
                     ->numeric()
                     ->default(0)
-                    ->required(),
+                    ->required()
+                    ->minValue(0),
             ]);
     }
 
