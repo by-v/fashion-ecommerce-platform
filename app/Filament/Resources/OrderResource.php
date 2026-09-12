@@ -10,8 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrderResource extends Resource
 {
@@ -29,7 +27,7 @@ class OrderResource extends Resource
 
                 Forms\Components\Select::make('status')
                     ->label('Status Pesanan')
-                    ->options([
+                    ->options(fn (?Order $record) => $record ? $record->getStatusTransitionOptions() : [
                         'pending' => 'Menunggu Pembayaran',
                         'paid' => 'Sudah Dibayar',
                         'processed' => 'Diproses',
@@ -40,15 +38,19 @@ class OrderResource extends Resource
                     ->required()
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, $record) {
-                        if ($state === 'shipped' && $record && !$record->shipped_at) {
+                        if ($state === 'shipped' && $record && ! $record->shipped_at) {
                             $set('shipped_at', now());
+                        }
+
+                        if ($state === 'cancelled' && $record) {
+                            Order::restoreStockForOrder($record);
                         }
                     }),
 
                 Forms\Components\TextInput::make('tracking_number')
                     ->label('Nomor Resi')
                     ->placeholder('Contoh: JNE123456789')
-                    ->visible(fn(Forms\Get $get) => in_array($get('status'), ['shipped', 'completed']))
+                    ->visible(fn (Forms\Get $get) => in_array($get('status'), ['shipped', 'completed']))
                     ->nullable(),
 
                 Forms\Components\Hidden::make('shipped_at'),

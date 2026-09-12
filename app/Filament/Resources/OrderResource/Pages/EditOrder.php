@@ -12,8 +12,17 @@ class EditOrder extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        $record = $this->getRecord();
+
+        $actions = [];
+
+        if (! in_array($record->status, ['paid', 'processed', 'shipped', 'completed'])) {
+            $actions[] = Actions\DeleteAction::make()
+                ->action(function () use ($record) {
+                    $record->delete();
+                });
+        }
+
+        return $actions;
     }
 }
