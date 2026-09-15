@@ -12,11 +12,11 @@ A fashion store built with **Laravel**, featuring **Midtrans (QRIS & Virtual Acc
 
 | Home | Catalog / Shop | Checkout |
 |------|----------------|----------|
-| [Screenshot] | [Screenshot] | [Screenshot] |
+|  <img width="947" height="475" alt="home" src="https://github.com/user-attachments/assets/0416255e-2dd2-4261-913b-554d44d50ddc" />| <img width="947" height="473" alt="shop" src="https://github.com/user-attachments/assets/3fcccc49-c08e-49b0-ad80-37df038b0443" /> | <img width="948" height="476" alt="checkout" src="https://github.com/user-attachments/assets/3874ccd0-2336-41b0-9474-de4f732a0ffa" />|
 
 | Order Confirmation | Admin Dashboard | Admin Orders |
 |--------------------|-----------------|--------------|
-| [Screenshot] | [Screenshot] | [Screenshot] |
+| <img width="767" height="390" alt="orderConfirmation" src="https://github.com/user-attachments/assets/ba954be8-55a8-4f50-990f-33604cd7eb3f" />| <img width="947" height="475" alt="dashboard" src="https://github.com/user-attachments/assets/407d1c29-8cef-425c-8635-28be37191748" />| <img width="959" height="475" alt="orders" src="https://github.com/user-attachments/assets/651c9dd6-84cc-4b38-a18a-de21765aeaf7" /> |
 
 ## 🛠️ Tech Stack
 
