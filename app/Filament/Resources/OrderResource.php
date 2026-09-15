@@ -9,7 +9,10 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class OrderResource extends Resource
 {
@@ -142,6 +145,22 @@ class OrderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    BulkAction::make('delete')
+                        ->label('Hapus Terpilih')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records): void {
+                            $records->each(function (Order $order) {
+                                if ($order->status === 'pending') {
+                                    Order::restoreStockForOrder($order);
+                                }
+                                $order->delete();
+                            });
+                        }),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }

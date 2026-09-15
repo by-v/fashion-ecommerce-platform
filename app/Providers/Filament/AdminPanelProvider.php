@@ -34,6 +34,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Zinc,
             ])
             ->font('Inter')
+            ->favicon(asset('favicon.svg'))
             ->darkMode()
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandName(env('APP_NAME', 'Fashion Store'))

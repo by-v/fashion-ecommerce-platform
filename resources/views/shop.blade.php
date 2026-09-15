@@ -14,81 +14,89 @@
                         <input type="hidden" name="search" value="{{ request('search') }}">
                     @endif
 
-                    <!-- Kategori -->
-                    <div class="mb-8">
-                        <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Kategori</h3>
-                        <div class="space-y-2">
-                            @foreach ($categories as $category)
-                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                    <input type="checkbox" name="categories[]" value="{{ $category->id }}"
-                                        onchange="document.getElementById('filterForm').submit()"
-                                        {{ in_array($category->id, request('categories', [])) ? 'checked' : '' }}
-                                        class="rounded border-gray-300 text-black focus:ring-black">
-                                    {{ $category->name }}
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
+                    @php
+                        $chip = 'inline-flex items-center px-3 py-1.5 text-sm border rounded-full transition cursor-pointer select-none whitespace-nowrap bg-white text-gray-700 border-gray-300 hover:border-black peer-checked:bg-black peer-checked:text-white peer-checked:border-black peer-focus-visible:ring-2 peer-focus-visible:ring-black/30';
+                    @endphp
 
-                    <!-- Tipe Produk -->
-                    <div class="mb-8">
-                        <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Tipe Produk</h3>
-                        <div class="space-y-2">
-                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name="type" value="all"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    {{ request('type', 'all') === 'all' ? 'checked' : '' }}
-                                    class="border-gray-300 text-black focus:ring-black">
-                                Semua Produk
-                            </label>
-                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name="type" value="featured"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    {{ request('type') === 'featured' ? 'checked' : '' }}
-                                    class="border-gray-300 text-black focus:ring-black">
-                                Produk Unggulan
-                            </label>
-                        </div>
-                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-1">
 
-                    <!-- Ketersediaan -->
-                    <div class="mb-8">
-                        <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Ketersediaan</h3>
-                        <div class="space-y-2">
-                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name="availability" value="all"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    {{ request('availability', 'all') === 'all' ? 'checked' : '' }}
-                                    class="border-gray-300 text-black focus:ring-black">
-                                Semua
-                            </label>
-                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="radio" name="availability" value="in_stock"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    {{ request('availability') === 'in_stock' ? 'checked' : '' }}
-                                    class="border-gray-300 text-black focus:ring-black">
-                                Stok Tersedia
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Size (khusus fashion, kosongkan array $availableSizes untuk toko non-fashion) -->
-                    @if (count($availableSizes))
-                        <div class="mb-8">
-                            <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Size</h3>
-                            <div class="space-y-2">
-                                @foreach ($availableSizes as $size)
-                                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                        <input type="checkbox" name="sizes[]" value="{{ $size }}"
+                        <!-- Kategori -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Kategori</h3>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($categories as $category)
+                                    <label class="relative cursor-pointer">
+                                        <input type="checkbox" name="categories[]" value="{{ $category->id }}"
                                             onchange="document.getElementById('filterForm').submit()"
-                                            {{ in_array($size, request('sizes', [])) ? 'checked' : '' }}
-                                            class="rounded border-gray-300 text-black focus:ring-black">
-                                        {{ $size }}
+                                            {{ in_array($category->id, request('categories', [])) ? 'checked' : '' }}
+                                            class="peer sr-only">
+                                        <span class="{{ $chip }}">{{ $category->name }}</span>
                                     </label>
                                 @endforeach
                             </div>
                         </div>
-                    @endif
+
+                        <!-- Tipe Produk -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Tipe Produk</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="type" value="all"
+                                        onchange="document.getElementById('filterForm').submit()"
+                                        {{ request('type', 'all') === 'all' ? 'checked' : '' }}
+                                        class="peer sr-only">
+                                    <span class="{{ $chip }}">Semua Produk</span>
+                                </label>
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="type" value="featured"
+                                        onchange="document.getElementById('filterForm').submit()"
+                                        {{ request('type') === 'featured' ? 'checked' : '' }}
+                                        class="peer sr-only">
+                                    <span class="{{ $chip }}">Produk Unggulan</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Ketersediaan -->
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Ketersediaan</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="availability" value="all"
+                                        onchange="document.getElementById('filterForm').submit()"
+                                        {{ request('availability', 'all') === 'all' ? 'checked' : '' }}
+                                        class="peer sr-only">
+                                    <span class="{{ $chip }}">Semua</span>
+                                </label>
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="availability" value="in_stock"
+                                        onchange="document.getElementById('filterForm').submit()"
+                                        {{ request('availability') === 'in_stock' ? 'checked' : '' }}
+                                        class="peer sr-only">
+                                    <span class="{{ $chip }}">Stok Tersedia</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Size (khusus fashion, kosongkan array $availableSizes untuk toko non-fashion) -->
+                        @if (count($availableSizes))
+                            <div>
+                                <h3 class="text-sm font-semibold uppercase tracking-wide mb-3">Size</h3>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach ($availableSizes as $size)
+                                        <label class="relative cursor-pointer">
+                                            <input type="checkbox" name="sizes[]" value="{{ $size }}"
+                                                onchange="document.getElementById('filterForm').submit()"
+                                                {{ in_array($size, request('sizes', [])) ? 'checked' : '' }}
+                                                class="peer sr-only">
+                                            <span class="{{ $chip }}">{{ $size }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                    </div>
 
                 </form>
             </aside>
