@@ -7,7 +7,6 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/css/filament/admin/theme.css',
-                'resources/css/admin-demo.css',
                 'resources/js/app.js'
             ],
             refresh: true,
