@@ -5,58 +5,42 @@
 @config 'tailwind.config.js';
 
 @layer components {
-    /* Dashboard widget cards */
-    .fi-wo-stats-overview .fi-wo-stat,
-    .fi-wo-chart .fi-cha,
-    .fi-wo-table .fi-tbl {
-        @apply rounded-xl border border-stone-200 shadow-sm dark:border-stone-700 dark:bg-stone-800/50;
-    }
 
-    /* Stat cards container */
-    .fi-wo-stats-overview .fi-wo-stat {
-        @apply bg-white dark:bg-stone-800/50;
+    /* Dashboard widget cards */
+    .fi-wi-stats-overview-stat,
+    .fi-wi-chart .fi-section,
+    .fi-wi-table .fi-section {
+        @apply rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/50;
     }
 
     /* Stat card value - larger font */
-    .fi-wo-stat-value {
-        @apply text-2xl font-bold text-stone-900 dark:text-stone-100;
+    .fi-wi-stats-overview-stat-value {
+        @apply text-2xl font-bold text-neutral-900 dark:text-neutral-100;
     }
 
     /* Stat card label */
-    .fi-wo-stat-label {
-        @apply text-sm font-medium text-stone-500 dark:text-stone-400;
+    .fi-wi-stats-overview-stat-label {
+        @apply text-sm font-medium text-neutral-500 dark:text-neutral-400;
     }
 
     /* Stat card description */
-    .fi-wo-stat-description {
-        @apply text-xs text-stone-400 dark:text-stone-500;
+    .fi-wi-stats-overview-stat-description {
+        @apply text-xs text-neutral-500 dark:text-neutral-400;
     }
 
-    /* Stat card icon colors */
-    .fi-wo-stat[data-stat="revenue"] .fi-wo-stat-icon {
-        @apply text-emerald-500 dark:text-emerald-400;
+    /* Stat card icon colors - monochrome */
+    .fi-wi-stats-overview-stat-icon {
+        @apply text-neutral-700 dark:text-neutral-300;
     }
 
-    .fi-wo-stat[data-stat="total-orders"] .fi-wo-stat-icon {
-        @apply text-blue-500 dark:text-blue-400;
-    }
-
-    .fi-wo-stat[data-stat="orders-pending"] .fi-wo-stat-icon {
-        @apply text-amber-500 dark:text-amber-400;
-    }
-
-    .fi-wo-stat[data-stat="low-stock"] .fi-wo-stat-icon {
-        @apply text-rose-500 dark:text-rose-400;
-    }
-
-    /* Widget heading */
-    .fi-widget-heading {
-        @apply font-montserrat text-base font-semibold text-stone-700 dark:text-stone-300;
+    /* Widget section heading */
+    .fi-section-header-heading {
+        @apply font-montserrat text-base font-semibold text-neutral-800 dark:text-neutral-200;
     }
 
     /* Dashboard main heading */
     .fi-header-heading {
-        @apply font-montserrat text-2xl font-bold text-stone-900 dark:text-stone-100;
+        @apply font-montserrat text-2xl font-bold text-neutral-900 dark:text-neutral-100;
     }
 }
 

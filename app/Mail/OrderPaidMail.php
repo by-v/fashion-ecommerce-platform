@@ -18,7 +18,7 @@ class OrderPaidMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Pembayaran Berhasil - Order #' . $this->order->order_number)
+        return $this->subject('Pembayaran Berhasil - Order #'.$this->order->order_number)
             ->markdown('emails.order-paid');
     }
 }

@@ -31,8 +31,8 @@ class RevenueTrendChart extends ChartWidget
                 [
                     'label' => 'Revenue (Rp)',
                     'data' => $data,
-                    'backgroundColor' => 'rgba(245, 158, 11, 0.1)',
-                    'borderColor' => '#f59e0b',
+                    'backgroundColor' => 'rgba(75, 85, 99, 0.1)',
+                    'borderColor' => '#4B5563',
                     'tension' => 0.4,
                     'pointRadius' => 2,
                     'pointHoverRadius' => 4,

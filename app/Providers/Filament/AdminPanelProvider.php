@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('admin')
             ->login()
             ->colors([
-                'primary' => Color::Stone,
+                'primary' => Color::Zinc,
             ])
             ->font('Inter')
             ->darkMode()

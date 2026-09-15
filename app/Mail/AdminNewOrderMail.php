@@ -18,7 +18,7 @@ class AdminNewOrderMail extends Mailable
 
     public function build()
     {
-        return $this->subject('🛍️ Pesanan Baru #' . $this->order->order_number . ' Telah Dibayar')
+        return $this->subject('🛍️ Pesanan Baru #'.$this->order->order_number.' Telah Dibayar')
             ->markdown('emails.admin-new-order');
     }
 }

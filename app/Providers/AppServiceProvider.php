@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use App\Models\Order;
-use App\Observers\OrderObserver;
 use App\Events\OrderCreated;
 use App\Events\OrderPaid;
-use App\Listeners\SendOrderPendingEmail;
 use App\Listeners\SendOrderPaidEmail;
+use App\Listeners\SendOrderPendingEmail;
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 

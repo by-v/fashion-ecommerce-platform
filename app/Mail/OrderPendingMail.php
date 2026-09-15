@@ -18,7 +18,7 @@ class OrderPendingMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Menunggu Pembayaran - Order #' . $this->order->order_number)
+        return $this->subject('Menunggu Pembayaran - Order #'.$this->order->order_number)
             ->markdown('emails.order-pending');
     }
 }

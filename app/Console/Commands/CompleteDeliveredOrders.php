@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class CompleteDeliveredOrders extends Command
 {
     protected $signature = 'orders:complete-delivered';
+
     protected $description = 'Mark shipped orders as completed once estimated delivery time has passed';
 
     public function handle(): void

@@ -18,7 +18,7 @@ class OrderShippedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Pesanan #' . $this->order->order_number . ' Sedang Dalam Perjalanan 🚚')
+        return $this->subject('Pesanan #'.$this->order->order_number.' Sedang Dalam Perjalanan 🚚')
             ->markdown('emails.order-shipped');
     }
 }

@@ -45,4 +45,8 @@ Route::post('/payment/notification', [PaymentController::class, 'notification'])
 
 Route::get('/track-order', [TrackOrderController::class, 'index'])->name('track.order');
 Route::post('/track-order', [TrackOrderController::class, 'track'])->name('track.order.search')->middleware('throttle:10,1');
+
+Route::get('/admin-demo', function () {
+    return view('admin-demo');
+})->name('admin.demo');
 require __DIR__.'/auth.php';
