@@ -22,4 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-.opencode
+.opencode/
+.env.*.local
+*.sql
+*.sql.gz
+/database/database.sqlite
